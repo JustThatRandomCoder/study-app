@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import VersionBadge from '../components/VersionBadge';
 import '../styles/HomePage.css';
 
 function HomePage() {
@@ -10,6 +11,7 @@ function HomePage() {
 
     return (
         <div className="homepage">
+            <VersionBadge />
             <div className="hero-section">
                 <div className="animated-background">
                     <div className="floating-shape shape-1"></div>

@@ -126,67 +126,81 @@
     font-size: 1.2rem;
     color: rgba(255, 255, 255, 0.8);
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
 }
 
 /* Upload Section */
 .upload-section {
-    margin: 2rem 0;
+    margin: 3rem 0;
+    display: flex;
+    justify-content: center;
 }
 
 .upload-box {
     border: 3px dashed rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
-    padding: 3rem;
+    border-radius: 20px;
+    padding: 4rem 3rem;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
     background: rgba(255, 255, 255, 0.05);
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
 }
 
 .upload-box:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
 }
 
 .upload-box.has-file {
     border-style: solid;
-    border-color: rgba(99, 102, 241, 0.5);
-    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.7);
+    background: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
 }
 
 .upload-icon,
 .file-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1.5rem;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .upload-text {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     color: white;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
 }
 
 .upload-hint {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 0.5rem;
 }
 
 .file-name {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     color: white;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
     word-break: break-word;
+    max-width: 90%;
 }
 
 .file-size {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 0.5rem;
 }
 
 /* Form */

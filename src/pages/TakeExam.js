@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import VersionBadge from '../components/VersionBadge';
 import { getExams, deleteExam } from '../utils/storage';
 import { validateAnswer } from '../utils/questionGenerator';
 import { updateStatsAfterExam } from '../utils/storage';
@@ -117,6 +118,7 @@ function TakeExam() {
     if (exams.length === 0) {
         return (
             <div className="take-exam-page">
+                <VersionBadge />
                 <div className="empty-state">
                     <div className="language-switcher-top-right">
                         <LanguageSwitcher />
@@ -135,6 +137,7 @@ function TakeExam() {
     if (!selectedExam) {
         return (
             <div className="take-exam-page">
+                <VersionBadge />
                 <div className="background-decoration">
                     <div className="circle circle-1"></div>
                     <div className="circle circle-2"></div>
@@ -204,6 +207,7 @@ function TakeExam() {
 
         return (
             <div className="take-exam-page">
+                <VersionBadge />
                 <div className="results-container animate-in">
                     <div className={`results-icon ${passed ? 'success' : 'fail'}`}>
                         {passed ? '🎉' : '📚'}
@@ -247,6 +251,7 @@ function TakeExam() {
 
     return (
         <div className="take-exam-page">
+            <VersionBadge />
             <div className="exam-container">
                 {/* Header */}
                 <div className="exam-header">

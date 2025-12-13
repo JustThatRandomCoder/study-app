@@ -14,7 +14,7 @@ const OCR_API_URL = 'https://api.ocr.space/parse/image';
 
 /**
  * Perform OCR using OCR.space API
- * @param {string} base64Image - Base64 encoded image
+ * @param {string} base64Image - Base64 encoded image with prefix
  * @param {string} language - Language code (eng, ger, fre, etc.)
  * @returns {Promise<string>} - Extracted text
  */
@@ -37,26 +37,27 @@ async function performOCRSpace(base64Image, language = 'eng') {
 
     const ocrLang = languageMap[language] || 'eng';
 
-    const formData = new FormData();
-    formData.append('base64Image', base64Image);
-    formData.append('language', ocrLang);
-    formData.append('isOverlayRequired', 'false');
-    formData.append('detectOrientation', 'true');
-    formData.append('scale', 'true');
-    formData.append('OCREngine', '2'); // Use OCR Engine 2 (better for handwriting)
-
     try {
         const response = await fetch(OCR_API_URL, {
             method: 'POST',
             headers: {
-                'apikey': OCR_API_KEY
+                'apikey': OCR_API_KEY,
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: formData
+            body: new URLSearchParams({
+                'base64Image': base64Image,
+                'language': ocrLang,
+                'isOverlayRequired': 'false',
+                'detectOrientation': 'true',
+                'scale': 'true',
+                'OCREngine': '2' // Engine 2 is better for handwriting
+            })
         });
 
         const result = await response.json();
 
         if (result.IsErroredOnProcessing) {
+            console.error('OCR Error:', result.ErrorMessage, result.ErrorDetails);
             throw new Error(result.ErrorMessage || 'OCR processing failed');
         }
 

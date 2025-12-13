@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import VersionBadge from '../components/VersionBadge';
 import { extractTextFromPDF as extractTextTesseract } from '../utils/pdfProcessor';
 import { extractTextFromPDF as extractTextOCRSpace } from '../utils/pdfProcessorOCRSpace';
 import { generateQuestions } from '../utils/questionGenerator';
@@ -148,6 +149,7 @@ function CreateExam() {
 
     return (
         <div className="create-exam-page">
+            <VersionBadge />
             <div className="background-decoration">
                 <div className="circle circle-1"></div>
                 <div className="circle circle-2"></div>
