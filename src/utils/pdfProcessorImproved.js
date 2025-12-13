@@ -45,7 +45,7 @@ async function performUltimateOCR(canvas, language = 'deu') {
 
         for (const mode of psmModes) {
             console.log(`🔍 Trying PSM Mode: ${mode.name}`);
-            
+
             const { data } = await Tesseract.recognize(
                 canvas,
                 tesseractLang,
@@ -105,7 +105,7 @@ function preprocessForHandwriting(canvas) {
     // Step 2: Extreme contrast boost for handwriting
     const contrastFactor = 3.0; // VIEL höher für Handschrift
     const factor = (259 * (contrastFactor * 255 + 255)) / (255 * (259 - contrastFactor * 255));
-    
+
     for (let i = 0; i < data.length; i += 4) {
         let value = data[i];
         value = factor * (value - 128) + 128;
@@ -151,7 +151,7 @@ function preprocessForHandwriting(canvas) {
 
     // Apply threshold - but keep slightly softer for handwriting
     threshold = Math.max(120, threshold - 20); // Handwriting needs lower threshold
-    
+
     for (let i = 0; i < data.length; i += 4) {
         const value = data[i] > threshold ? 255 : 0;
         data[i] = data[i + 1] = data[i + 2] = value;
@@ -254,13 +254,13 @@ async function extractTextFromScannedPDF(file, progressCallback, language = 'eng
             // If result is poor, try without preprocessing
             if (!text || text.trim().length < 20) {
                 console.log(`🔄 Page ${pageNum}: Retrying without preprocessing...`);
-                
+
                 // Re-render original
                 const canvas2 = document.createElement('canvas');
                 const context2 = canvas2.getContext('2d');
                 canvas2.width = viewport.width;
                 canvas2.height = viewport.height;
-                
+
                 await page.render({
                     canvasContext: context2,
                     viewport: viewport
