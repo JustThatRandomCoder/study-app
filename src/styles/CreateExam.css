@@ -48,7 +48,8 @@
     position: relative;
     z-index: 1;
     max-width: 700px;
-    margin: 0 auto; /* ZENTRIERT DEN CONTAINER */
+    margin: 0 auto;
+    /* ZENTRIERT DEN CONTAINER */
 }
 
 .header-row {

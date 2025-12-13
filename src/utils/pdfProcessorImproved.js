@@ -1,127 +1,184 @@
 /**
- * COMPLETELY NEW OCR Implementation
- * Uses multiple free OCR services with fallback
- * Better handwriting recognition than Tesseract or OCR.space
+ * PREMIUM OCR Implementation - Unbegrenzt und Lokal
+ * Nutzt Tesseract.js mit OPTIMALEN Settings für Handschrift
+ * Keine API-Limits, keine Cloud-Abhängigkeit
  */
 
 import * as pdfjsLib from 'pdfjs-dist';
+import Tesseract from 'tesseract.js';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 /**
- * Try OCR using api.ocr.space with better settings
+ * ULTIMATE Tesseract OCR with best settings for handwriting
+ * Uses multiple PSM modes and combines results
  */
-async function tryOCRSpaceAPI(base64Image, language = 'ger') {
-    const apiKey = 'K87899142388957';
-    const apiUrl = 'https://api.ocr.space/parse/image';
+async function performUltimateOCR(canvas, language = 'deu') {
+    const langMap = {
+        'eng': 'eng',
+        'deu': 'deu',
+        'fra': 'fra',
+        'spa': 'spa',
+        'ita': 'ita',
+        'por': 'por',
+        'nld': 'nld',
+        'pol': 'pol',
+        'rus': 'rus',
+        'jpn': 'jpn',
+        'chi_sim': 'chi_sim',
+        'kor': 'kor'
+    };
+
+    const tesseractLang = langMap[language] || 'deu';
 
     try {
-        const formData = new FormData();
-        formData.append('base64Image', base64Image);
-        formData.append('language', language);
-        formData.append('isOverlayRequired', 'false');
-        formData.append('detectOrientation', 'true');
-        formData.append('scale', 'true');
-        formData.append('OCREngine', '2');
-        formData.append('isTable', 'false');
+        // Try multiple PSM (Page Segmentation Modes) for best results
+        const psmModes = [
+            { psm: Tesseract.PSM.AUTO, name: 'AUTO' },
+            { psm: Tesseract.PSM.SINGLE_BLOCK, name: 'SINGLE_BLOCK' },
+            { psm: Tesseract.PSM.SINGLE_COLUMN, name: 'SINGLE_COLUMN' }
+        ];
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'apikey': apiKey
-            },
-            body: formData
-        });
+        let bestResult = '';
+        let bestConfidence = 0;
 
-        const result = await response.json();
+        for (const mode of psmModes) {
+            console.log(`🔍 Trying PSM Mode: ${mode.name}`);
+            
+            const { data } = await Tesseract.recognize(
+                canvas,
+                tesseractLang,
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+                        }
+                    },
+                    tessedit_pageseg_mode: mode.psm,
+                    tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
+                    // Handwriting optimization
+                    tessedit_char_whitelist: '',
+                    preserve_interword_spaces: '1',
+                    tessedit_enable_dict_correction: '1',
+                    // Better accuracy
+                    textord_heavy_nr: '1',
+                    language_model_penalty_non_dict_word: '0.5',
+                    language_model_penalty_non_freq_dict_word: '0.5'
+                }
+            );
 
-        if (!result.IsErroredOnProcessing && result.ParsedResults && result.ParsedResults.length > 0) {
-            return result.ParsedResults[0].ParsedText || '';
+            if (data.confidence > bestConfidence) {
+                bestConfidence = data.confidence;
+                bestResult = data.text;
+            }
+
+            // If we got good confidence, use it
+            if (data.confidence > 70) {
+                return data.text;
+            }
         }
 
-        console.error('OCR.space Error:', result);
-        return null;
+        console.log(`✅ Best OCR confidence: ${bestConfidence.toFixed(1)}%`);
+        return bestResult;
+
     } catch (error) {
-        console.error('OCR.space API failed:', error);
-        return null;
+        console.error('Tesseract OCR failed:', error);
+        throw error;
     }
 }
 
 /**
- * Try OCR using FREE API from api-ninjas.com
+ * EXTREME image preprocessing - optimized for handwriting
  */
-async function tryApiNinjasOCR(base64Image) {
-    const apiKey = 'YOUR_API_KEY_HERE'; // Free tier available
-    const apiUrl = 'https://api.api-ninjas.com/v1/imagetotext';
-
-    try {
-        // Remove data URL prefix
-        const imageData = base64Image.replace(/^data:image\/\w+;base64,/, '');
-
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'X-Api-Key': apiKey,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                image: imageData
-            })
-        });
-
-        const result = await response.json();
-
-        if (result && Array.isArray(result) && result.length > 0) {
-            return result.map(item => item.text).join('\n');
-        }
-
-        return null;
-    } catch (error) {
-        console.error('API-Ninjas OCR failed:', error);
-        return null;
-    }
-}
-
-/**
- * Enhanced image preprocessing for better OCR
- */
-function preprocessImageAdvanced(canvas) {
+function preprocessForHandwriting(canvas) {
     const ctx = canvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
 
-    // Step 1: Grayscale with proper weighting
+    // Step 1: Grayscale conversion
     for (let i = 0; i < data.length; i += 4) {
         const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
         data[i] = data[i + 1] = data[i + 2] = gray;
     }
 
-    // Step 2: Histogram equalization for better contrast
+    // Step 2: Extreme contrast boost for handwriting
+    const contrastFactor = 3.0; // VIEL höher für Handschrift
+    const factor = (259 * (contrastFactor * 255 + 255)) / (255 * (259 - contrastFactor * 255));
+    
+    for (let i = 0; i < data.length; i += 4) {
+        let value = data[i];
+        value = factor * (value - 128) + 128;
+        value = Math.max(0, Math.min(255, value));
+        data[i] = data[i + 1] = data[i + 2] = value;
+    }
+
+    // Step 3: Adaptive binarization (Otsu's method approximation)
     const histogram = new Array(256).fill(0);
     for (let i = 0; i < data.length; i += 4) {
-        histogram[data[i]]++;
+        histogram[Math.floor(data[i])]++;
     }
 
-    const cdf = new Array(256);
-    cdf[0] = histogram[0];
-    for (let i = 1; i < 256; i++) {
-        cdf[i] = cdf[i - 1] + histogram[i];
-    }
-
-    const cdfMin = cdf.find(val => val > 0);
+    let sum = 0;
+    let sumB = 0;
+    let wB = 0;
+    let wF = 0;
+    let max = 0;
+    let threshold = 0;
     const total = canvas.width * canvas.height;
 
-    for (let i = 0; i < data.length; i += 4) {
-        const normalized = Math.round(((cdf[data[i]] - cdfMin) / (total - cdfMin)) * 255);
-        data[i] = data[i + 1] = data[i + 2] = normalized;
+    for (let i = 0; i < 256; i++) {
+        sum += i * histogram[i];
     }
 
-    // Step 3: Adaptive thresholding
-    const threshold = 140; // Slightly more aggressive
+    for (let i = 0; i < 256; i++) {
+        wB += histogram[i];
+        if (wB === 0) continue;
+
+        wF = total - wB;
+        if (wF === 0) break;
+
+        sumB += i * histogram[i];
+        const mB = sumB / wB;
+        const mF = (sum - sumB) / wF;
+        const between = wB * wF * (mB - mF) * (mB - mF);
+
+        if (between > max) {
+            max = between;
+            threshold = i;
+        }
+    }
+
+    // Apply threshold - but keep slightly softer for handwriting
+    threshold = Math.max(120, threshold - 20); // Handwriting needs lower threshold
+    
     for (let i = 0; i < data.length; i += 4) {
         const value = data[i] > threshold ? 255 : 0;
         data[i] = data[i + 1] = data[i + 2] = value;
+    }
+
+    // Step 4: Noise reduction
+    const kernel = 3;
+    const half = Math.floor(kernel / 2);
+    const tempData = new Uint8ClampedArray(data);
+
+    for (let y = half; y < canvas.height - half; y++) {
+        for (let x = half; x < canvas.width - half; x++) {
+            let sum = 0;
+            let count = 0;
+
+            for (let ky = -half; ky <= half; ky++) {
+                for (let kx = -half; kx <= half; kx++) {
+                    const idx = ((y + ky) * canvas.width + (x + kx)) * 4;
+                    sum += tempData[idx];
+                    count++;
+                }
+            }
+
+            const idx = (y * canvas.width + x) * 4;
+            const avg = sum / count;
+            data[idx] = data[idx + 1] = data[idx + 2] = avg > 127 ? 255 : 0;
+        }
     }
 
     ctx.putImageData(imageData, 0, 0);
@@ -129,7 +186,8 @@ function preprocessImageAdvanced(canvas) {
 }
 
 /**
- * Extract text from scanned PDF with multiple OCR attempts
+ * Extract text from scanned PDF with ULTIMATE OCR
+ * No limits, fully local processing
  */
 async function extractTextFromScannedPDF(file, progressCallback, language = 'eng') {
     try {
@@ -139,14 +197,7 @@ async function extractTextFromScannedPDF(file, progressCallback, language = 'eng
         let fullText = '';
         const totalPages = pdf.numPages;
 
-        // Language mapping
-        const langMap = {
-            'eng': 'eng',
-            'deu': 'ger',
-            'fra': 'fre',
-            'spa': 'spa'
-        };
-        const ocrLang = langMap[language] || 'ger';
+        console.log(`🚀 Starting ULTIMATE OCR for ${totalPages} pages`);
 
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
             if (progressCallback) {
@@ -160,8 +211,8 @@ async function extractTextFromScannedPDF(file, progressCallback, language = 'eng
 
             const page = await pdf.getPage(pageNum);
 
-            // Render at VERY high quality
-            const viewport = page.getViewport({ scale: 4.0 });
+            // Render at MAXIMUM quality - 5x scale for handwriting
+            const viewport = page.getViewport({ scale: 5.0 });
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = viewport.width;
@@ -172,9 +223,19 @@ async function extractTextFromScannedPDF(file, progressCallback, language = 'eng
                 viewport: viewport
             }).promise;
 
-            // Preprocess for better OCR
-            const preprocessed = preprocessImageAdvanced(canvas);
-            const base64Image = preprocessed.toDataURL('image/png');
+            if (progressCallback) {
+                progressCallback({
+                    status: 'ocr',
+                    page: pageNum,
+                    totalPages: totalPages,
+                    percentage: Math.round((pageNum / totalPages) * 100),
+                    ocrProgress: 20
+                });
+            }
+
+            // Try with preprocessing
+            console.log(`📝 Page ${pageNum}: Preprocessing...`);
+            const preprocessed = preprocessForHandwriting(canvas);
 
             if (progressCallback) {
                 progressCallback({
@@ -182,18 +243,30 @@ async function extractTextFromScannedPDF(file, progressCallback, language = 'eng
                     page: pageNum,
                     totalPages: totalPages,
                     percentage: Math.round((pageNum / totalPages) * 100),
-                    ocrProgress: 50
+                    ocrProgress: 40
                 });
             }
 
-            // Try OCR with OCR.space
-            let text = await tryOCRSpaceAPI(base64Image, ocrLang);
+            // Perform ULTIMATE OCR
+            console.log(`🔍 Page ${pageNum}: Running multi-mode OCR...`);
+            let text = await performUltimateOCR(preprocessed, language);
 
-            // If OCR.space fails, try without preprocessing
-            if (!text || text.trim().length < 10) {
-                console.log('Retrying without preprocessing...');
-                const originalBase64 = canvas.toDataURL('image/png');
-                text = await tryOCRSpaceAPI(originalBase64, ocrLang);
+            // If result is poor, try without preprocessing
+            if (!text || text.trim().length < 20) {
+                console.log(`🔄 Page ${pageNum}: Retrying without preprocessing...`);
+                
+                // Re-render original
+                const canvas2 = document.createElement('canvas');
+                const context2 = canvas2.getContext('2d');
+                canvas2.width = viewport.width;
+                canvas2.height = viewport.height;
+                
+                await page.render({
+                    canvasContext: context2,
+                    viewport: viewport
+                }).promise;
+
+                text = await performUltimateOCR(canvas2, language);
             }
 
             if (progressCallback) {
@@ -206,9 +279,11 @@ async function extractTextFromScannedPDF(file, progressCallback, language = 'eng
                 });
             }
 
-            fullText += (text || '') + '\n\n';
+            console.log(`✅ Page ${pageNum}: Extracted ${text.length} characters`);
+            fullText += text + '\n\n';
         }
 
+        console.log(`🎉 OCR Complete! Total: ${fullText.length} characters`);
         return fullText.trim();
     } catch (error) {
         console.error('Error performing OCR on PDF:', error);
