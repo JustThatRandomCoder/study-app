@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VersionBadge from '../components/VersionBadge';
-import { extractTextFromPDF as extractTextTesseract } from '../utils/pdfProcessor';
-import { extractTextFromPDF as extractTextOCRSpace } from '../utils/pdfProcessorOCRSpace';
+import { extractTextFromPDF } from '../utils/pdfProcessorImproved';
 import { generateQuestions } from '../utils/questionGenerator';
 import { saveExam } from '../utils/storage';
 import '../styles/CreateExam.css';
@@ -17,7 +16,6 @@ function CreateExam() {
     const [examName, setExamName] = useState('');
     const [numQuestions, setNumQuestions] = useState(10);
     const [ocrLanguage, setOcrLanguage] = useState('eng'); // OCR language (separate from UI language)
-    const [ocrEngine, setOcrEngine] = useState('ocrspace'); // 'tesseract' or 'ocrspace'
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [progress, setProgress] = useState(0);
@@ -72,10 +70,7 @@ function CreateExam() {
         setProcessingMessage(t('createExam.processing.analyzingPDF'));
 
         try {
-            // Select OCR engine based on user choice
-            const extractTextFromPDF = ocrEngine === 'ocrspace' ? extractTextOCRSpace : extractTextTesseract;
-
-            // Extract text from PDF with progress callback and selected language
+            // Use improved OCR processor
             const text = await extractTextFromPDF(file, (progressInfo) => {
                 if (progressInfo.status === 'detected-scanned') {
                     setProcessingMessage(t('createExam.processing.detectedScanned'));
@@ -256,25 +251,6 @@ function CreateExam() {
                                     <span>5</span>
                                     <span>20</span>
                                 </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="ocr-engine">
-                                    🔧 OCR Engine
-                                </label>
-                                <select
-                                    id="ocr-engine"
-                                    value={ocrEngine}
-                                    onChange={(e) => setOcrEngine(e.target.value)}
-                                    className="form-select"
-                                >
-                                    <option value="ocrspace">OCR.space (Empfohlen für Handschrift 🌟)</option>
-                                    <option value="tesseract">Tesseract (Lokal, schneller)</option>
-                                </select>
-                                <p className="form-hint">
-                                    <strong>OCR.space:</strong> Bessere Handschrifterkennung, nutzt Cloud-API<br />
-                                    <strong>Tesseract:</strong> Lokale Verarbeitung, gut für gedruckten Text
-                                </p>
                             </div>
 
                             <div className="form-group">
