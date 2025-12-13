@@ -271,7 +271,7 @@ function CreateExam() {
                                 ></div>
                             </div>
                             <p className="progress-text">{progress}%</p>
-                            
+
                             {processingMessage.includes('OCR') && (
                                 <div className="ocr-notice">
                                     <p>⏱️ OCR processing may take 1-2 minutes per page</p>

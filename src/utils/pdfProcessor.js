@@ -14,7 +14,7 @@ async function extractTextFromScannedPDF(file, progressCallback) {
     try {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        
+
         let fullText = '';
         const totalPages = pdf.numPages;
 
@@ -30,7 +30,7 @@ async function extractTextFromScannedPDF(file, progressCallback) {
             }
 
             const page = await pdf.getPage(pageNum);
-            
+
             // Render page to canvas
             const viewport = page.getViewport({ scale: 2.0 });
             const canvas = document.createElement('canvas');
@@ -45,7 +45,7 @@ async function extractTextFromScannedPDF(file, progressCallback) {
 
             // Convert canvas to image and perform OCR
             const imageData = canvas.toDataURL('image/png');
-            
+
             const { data: { text } } = await Tesseract.recognize(
                 imageData,
                 'eng',
@@ -96,7 +96,7 @@ export async function extractTextFromPDF(file, progressCallback) {
             const pageText = textContent.items
                 .map(item => item.str)
                 .join(' ');
-            
+
             if (pageText.trim().length > 50) {
                 hasText = true;
                 break;
