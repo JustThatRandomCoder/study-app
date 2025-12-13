@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VersionBadge from '../components/VersionBadge';
-import { extractTextFromPDF, generatePDFPreviews } from '../utils/pdfProcessorHybrid';
+import { extractTextFromPDF, generatePDFPreviews } from '../utils/pdfProcessorSimple';
 import { generateQuestions } from '../utils/questionGenerator';
 import { saveExam } from '../utils/storage';
 import '../styles/CreateExam.css';
@@ -61,39 +61,54 @@ function CreateExam() {
 
     const handleNext = async () => {
         if (step === 1 && file) {
+            console.log('🎬 [HANDLE NEXT] Starting PDF analysis...');
             setLoading(true);
             setError('');
-            setProcessingMessage('Analysiere PDF...');
+            setProcessingMessage('📄 Analysiere PDF...');
 
             try {
                 // Try to extract text
+                console.log('🔍 [HANDLE NEXT] Calling extractTextFromPDF...');
                 const text = await extractTextFromPDF(file, (progressInfo) => {
-                    if (progressInfo.status === 'scanned-detected') {
-                        // PDF is scanned, needs manual entry
-                        setIsScannedPDF(true);
-                    } else if (progressInfo.status === 'extracting') {
-                        setProcessingMessage(`Extrahiere Text... ${progressInfo.percentage}%`);
+                    if (progressInfo.status === 'extracting') {
+                        setProcessingMessage(`📝 Extrahiere Text... Seite ${progressInfo.page}/${progressInfo.totalPages} (${progressInfo.percentage}%)`);
                     }
                 });
 
-                if (text && text.length > 100) {
-                    // Text extracted successfully
+                console.log('📊 [HANDLE NEXT] Result:', text ? `${text.length} chars` : 'NULL');
+
+                if (text && text.length >= 50) {
+                    // SUCCESS - Text extracted!
+                    console.log('✅ [HANDLE NEXT] SUCCESS - Text extracted');
                     setIsScannedPDF(false);
                     setStep(2);
                 } else {
-                    // Scanned PDF - generate previews and show manual entry
-                    setProcessingMessage('Generiere Vorschau...');
+                    // FAILED - Show manual entry
+                    console.log('⚠️ [HANDLE NEXT] Not enough text - showing manual entry');
+                    setProcessingMessage('📸 Generiere Vorschau...');
                     const previewData = await generatePDFPreviews(file, 3);
                     setPdfPreviews(previewData.previews);
                     setIsScannedPDF(true);
                     setStep(2);
+                    console.log('✅ [HANDLE NEXT] Manual entry ready');
                 }
             } catch (error) {
-                console.error('Error analyzing PDF:', error);
-                setError('Fehler beim Analysieren des PDFs');
+                console.error('❌ [HANDLE NEXT] ERROR:', error);
+                // Show manual entry on error
+                try {
+                    const previewData = await generatePDFPreviews(file, 3);
+                    setPdfPreviews(previewData.previews);
+                    setIsScannedPDF(true);
+                    setStep(2);
+                    setError('⚠️ Text-Extraktion fehlgeschlagen - Bitte manuell eingeben');
+                } catch (previewError) {
+                    console.error('❌ [HANDLE NEXT] Preview error:', previewError);
+                    setError('❌ Fehler beim Laden der PDF');
+                }
             } finally {
                 setLoading(false);
                 setProcessingMessage('');
+                console.log('🏁 [HANDLE NEXT] Done');
             }
         }
     };
@@ -272,8 +287,8 @@ function CreateExam() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                         </svg>
                                         <div>
-                                            <strong>📝 Gescannte PDF erkannt!</strong>
-                                            <p>Deine PDF enthält Handschrift oder Bilder. Bitte gib den Text manuell ein oder kopiere ihn aus dem PDF.</p>
+                                            <strong>✍️ Manuelle Eingabe erforderlich</strong>
+                                            <p>Deine PDF konnte nicht automatisch verarbeitet werden. Bitte gib den Text manuell ein oder kopiere ihn aus dem PDF.</p>
                                         </div>
                                     </div>
 
