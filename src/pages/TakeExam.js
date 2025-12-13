@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getExams } from '../utils/storage';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { getExams, deleteExam } from '../utils/storage';
 import { validateAnswer } from '../utils/questionGenerator';
 import { updateStatsAfterExam } from '../utils/storage';
 import '../styles/TakeExam.css';
 
 function TakeExam() {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [exams, setExams] = useState([]);
     const [selectedExam, setSelectedExam] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -102,15 +105,27 @@ function TakeExam() {
         setIsComplete(false);
     };
 
+    const handleDeleteExam = (examId, event) => {
+        event.stopPropagation(); // Prevent starting the exam when clicking delete
+        if (window.confirm(t('takeExam.confirmDelete') || 'Are you sure you want to delete this exam?')) {
+            deleteExam(examId);
+            const updatedExams = getExams();
+            setExams(updatedExams);
+        }
+    };
+
     if (exams.length === 0) {
         return (
             <div className="take-exam-page">
                 <div className="empty-state">
+                    <div className="language-switcher-top-right">
+                        <LanguageSwitcher />
+                    </div>
                     <div className="empty-icon">📚</div>
-                    <h2>No Exams Available</h2>
-                    <p>Create an exam first to start practicing</p>
+                    <h2>{t('takeExam.empty.title')}</h2>
+                    <p>{t('takeExam.empty.description')}</p>
                     <button className="btn btn-primary" onClick={() => navigate('/create')}>
-                        Create Your First Exam
+                        {t('takeExam.empty.createButton')}
                     </button>
                 </div>
             </div>
@@ -126,41 +141,55 @@ function TakeExam() {
                 </div>
 
                 <div className="exam-selection-container">
-                    <button className="back-btn" onClick={() => navigate('/')}>
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Home
-                    </button>
+                    <div className="header-row">
+                        <button className="back-btn" onClick={() => navigate('/')}>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            {t('common.backToHome')}
+                        </button>
+                        <LanguageSwitcher />
+                    </div>
 
-                    <h1 className="page-title">Select an Exam</h1>
-                    <p className="page-subtitle">Choose an exam to start practicing</p>
+                    <h1 className="page-title">{t('takeExam.selectTitle')}</h1>
+                    <p className="page-subtitle">{t('takeExam.selectSubtitle')}</p>
 
                     <div className="exams-grid">
                         {exams.map(exam => (
-                            <div key={exam.id} className="exam-card" onClick={() => startExam(exam)}>
-                                <div className="exam-card-header">
-                                    <h3>{exam.name}</h3>
-                                    <div className="exam-date">
-                                        {new Date(exam.createdAt).toLocaleDateString()}
-                                    </div>
-                                </div>
-                                <div className="exam-card-body">
-                                    <div className="exam-stat">
-                                        <span className="stat-icon">📝</span>
-                                        <span>{exam.totalQuestions} Questions</span>
-                                    </div>
-                                    <div className="exam-stat">
-                                        <span className="stat-icon">⭐</span>
-                                        <span>{exam.totalPoints} Points</span>
-                                    </div>
-                                </div>
-                                <button className="start-exam-btn">
-                                    Start Exam
+                            <div key={exam.id} className="exam-card">
+                                <button
+                                    className="delete-exam-btn"
+                                    onClick={(e) => handleDeleteExam(exam.id, e)}
+                                    title={t('takeExam.deleteExam') || 'Delete exam'}
+                                >
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
                                 </button>
+                                <div className="exam-card-content" onClick={() => startExam(exam)}>
+                                    <div className="exam-card-header">
+                                        <h3>{exam.name}</h3>
+                                        <div className="exam-date">
+                                            {new Date(exam.createdAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <div className="exam-card-body">
+                                        <div className="exam-stat">
+                                            <span className="stat-icon">📝</span>
+                                            <span>{exam.totalQuestions} {t('takeExam.examCard.questions')}</span>
+                                        </div>
+                                        <div className="exam-stat">
+                                            <span className="stat-icon">⭐</span>
+                                            <span>{exam.totalPoints} {t('takeExam.examCard.points')}</span>
+                                        </div>
+                                    </div>
+                                    <button className="start-exam-btn">
+                                        {t('takeExam.examCard.startButton')}
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -181,34 +210,34 @@ function TakeExam() {
                     </div>
 
                     <h1 className="results-title">
-                        {passed ? 'Congratulations!' : 'Keep Practicing!'}
+                        {passed ? t('takeExam.results.congratulations') : t('takeExam.results.keepPracticing')}
                     </h1>
 
                     <p className="results-subtitle">
-                        {passed ? 'You passed the exam!' : 'You can do better next time!'}
+                        {passed ? t('takeExam.results.passed') : t('takeExam.results.tryAgain')}
                     </p>
 
                     <div className="results-stats">
                         <div className="stat-card">
                             <div className="stat-value">{score}/{selectedExam.questions.length}</div>
-                            <div className="stat-label">Correct Answers</div>
+                            <div className="stat-label">{t('takeExam.results.correctAnswers')}</div>
                         </div>
                         <div className="stat-card">
                             <div className="stat-value">{percentage}%</div>
-                            <div className="stat-label">Score</div>
+                            <div className="stat-label">{t('takeExam.results.score')}</div>
                         </div>
                         <div className="stat-card">
                             <div className="stat-value">{totalPoints}</div>
-                            <div className="stat-label">Points Earned</div>
+                            <div className="stat-label">{t('takeExam.results.pointsEarned')}</div>
                         </div>
                     </div>
 
                     <div className="results-actions">
                         <button className="btn btn-secondary" onClick={handleBackToSelection}>
-                            Choose Another Exam
+                            {t('takeExam.results.chooseAnother')}
                         </button>
                         <button className="btn btn-primary" onClick={handleRetake}>
-                            Retake Exam
+                            {t('takeExam.results.retake')}
                         </button>
                     </div>
                 </div>
@@ -224,17 +253,17 @@ function TakeExam() {
                     <div className="exam-info">
                         <h2 className="exam-name">{selectedExam.name}</h2>
                         <div className="progress-info">
-                            Question {currentQuestionIndex + 1} of {selectedExam.questions.length}
+                            {t('takeExam.exam.question')} {currentQuestionIndex + 1} {t('takeExam.exam.of')} {selectedExam.questions.length}
                         </div>
                     </div>
                     <div className="exam-stats">
                         <div className="stat-item">
                             <span className="stat-icon">⭐</span>
-                            <span className="stat-text">{totalPoints} pts</span>
+                            <span className="stat-text">{totalPoints} {t('takeExam.exam.points')}</span>
                         </div>
                         <div className="stat-item">
                             <span className="stat-icon">🔥</span>
-                            <span className="stat-text">{streak} streak</span>
+                            <span className="stat-text">{streak} {t('takeExam.exam.streak')}</span>
                         </div>
                     </div>
                 </div>
@@ -252,7 +281,7 @@ function TakeExam() {
                 {/* Question Card */}
                 <div className="question-card animate-in">
                     <div className="question-type-badge">
-                        {currentQuestion.type.replace('-', ' ')}
+                        {t(`takeExam.questionTypes.${currentQuestion.type}`)}
                     </div>
 
                     <h3 className="question-text">{currentQuestion.question}</h3>
@@ -279,13 +308,13 @@ function TakeExam() {
                                         className="option-btn true-btn"
                                         onClick={() => handleAnswer('true')}
                                     >
-                                        ✓ True
+                                        {t('takeExam.exam.trueFalse.true')}
                                     </button>
                                     <button
                                         className="option-btn false-btn"
                                         onClick={() => handleAnswer('false')}
                                     >
-                                        ✗ False
+                                        {t('takeExam.exam.trueFalse.false')}
                                     </button>
                                 </div>
                             )}
@@ -295,7 +324,7 @@ function TakeExam() {
                                     <input
                                         type="text"
                                         className="answer-input"
-                                        placeholder="Type your answer..."
+                                        placeholder={t('takeExam.exam.typePlaceholder')}
                                         onKeyPress={(e) => {
                                             if (e.key === 'Enter' && e.target.value.trim()) {
                                                 handleAnswer(e.target.value);
@@ -312,13 +341,13 @@ function TakeExam() {
                                             }
                                         }}
                                     >
-                                        Submit Answer
+                                        {t('takeExam.exam.submitAnswer')}
                                     </button>
                                 </div>
                             )}
 
                             <button className="skip-btn" onClick={handleSkip}>
-                                Skip Question
+                                {t('takeExam.exam.skipQuestion')}
                             </button>
                         </div>
                     )}
@@ -329,12 +358,12 @@ function TakeExam() {
                                 {feedback.isCorrect ? '✓' : '✗'}
                             </div>
                             <div className="feedback-text">
-                                <h4>{feedback.isCorrect ? 'Correct!' : 'Incorrect'}</h4>
+                                <h4>{feedback.isCorrect ? t('takeExam.feedback.correct') : t('takeExam.feedback.incorrect')}</h4>
                                 {!feedback.isCorrect && (
-                                    <p>The correct answer was: <strong>{feedback.correctAnswer}</strong></p>
+                                    <p>{t('takeExam.feedback.correctAnswer')} <strong>{feedback.correctAnswer}</strong></p>
                                 )}
                                 <p className="points-earned">
-                                    {feedback.isCorrect ? `+${feedback.pointsEarned} points!` : 'No points earned'}
+                                    {feedback.isCorrect ? `+${feedback.pointsEarned} ${t('takeExam.feedback.pointsEarned')}` : t('takeExam.feedback.noPoints')}
                                 </p>
                             </div>
                         </div>

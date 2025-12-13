@@ -13,6 +13,13 @@
     position: relative;
 }
 
+.language-switcher-container {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 1000;
+}
+
 .animated-background {
     position: absolute;
     top: 0;

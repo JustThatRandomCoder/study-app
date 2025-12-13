@@ -12,6 +12,14 @@
     align-items: center;
     justify-content: center;
     text-align: center;
+    position: relative;
+}
+
+.language-switcher-top-right {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 1000;
 }
 
 .empty-icon {
@@ -48,6 +56,17 @@
 /* Exam Selection */
 .exam-selection-container {
     max-width: 1200px;
+}
+
+.exam-selection-container .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.exam-selection-container .header-row .back-btn {
+    margin-bottom: 0;
     margin: 0 auto;
     position: relative;
     z-index: 1;
@@ -65,16 +84,55 @@
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 20px;
-    padding: 2rem;
-    cursor: pointer;
+    padding: 0;
+    position: relative;
     transition: all 0.3s ease;
     animation: fadeInUp 0.5s ease;
+    overflow: hidden;
 }
 
 .exam-card:hover {
     transform: translateY(-10px);
     background: rgba(255, 255, 255, 0.15);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.exam-card-content {
+    padding: 2rem;
+    cursor: pointer;
+}
+
+.delete-exam-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+    opacity: 0;
+}
+
+.exam-card:hover .delete-exam-btn {
+    opacity: 1;
+}
+
+.delete-exam-btn:hover {
+    background: rgba(220, 38, 38, 1);
+    transform: scale(1.1);
+}
+
+.delete-exam-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 .exam-card-header {

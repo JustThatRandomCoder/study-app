@@ -8,7 +8,19 @@ A beautiful, gamified study application built with React that transforms your PD
 ## ✨ Features
 
 - 📚 **PDF Upload & Processing** - Upload your study materials and let the app extract the content
-- 📷 **OCR Support** - ✨ NEW! Works with handwritten notes and scanned PDFs using Tesseract.js OCR
+- 📷 **Enhanced OCR Support** - Works with handwritten notes and scanned PDFs using advanced image preprocessing
+  - Grayscale conversion for better text detection
+  - Contrast enhancement (1.5x) for clearer text
+  - Adaptive thresholding for improved handwriting recognition
+  - High-quality rendering (3.0 scale) for maximum OCR accuracy
+- 🌍 **Multi-Language Document Support** - OCR supports 12+ languages including:
+  - English, German, French, Spanish
+  - Italian, Portuguese, Dutch, Polish
+  - Russian, Chinese (Simplified), Japanese, Korean
+- 🌐 **Full UI Translation** - ✨ NEW! Complete app interface in English and German
+  - Toggle between languages with one click
+  - Language preference saved in browser
+  - Separate UI language and OCR language settings
 - 🤖 **Smart Question Generation** - Automatically generates multiple question types:
   - Fill-in-the-blank
   - Multiple choice
@@ -82,12 +94,22 @@ Your app will be live at `https://JustThatRandomCoder.github.io/study-app`
 
 ## 🎯 How to Use
 
+### Language Switcher
+
+- Switch between **English** and **German** UI anytime
+- Language switcher appears in the top-right corner of all pages
+- Your language preference is automatically saved
+
 ### Creating an Exam
 
 1. Click **"Create New Exam"** on the home page
-2. Upload a PDF file containing your study material
-3. Configure the exam (name and number of questions)
-4. Wait while the app generates questions
+2. Upload a PDF file containing your study material (supports both text-based and scanned/handwritten PDFs)
+3. Configure the exam:
+   - Enter an exam name
+   - Choose the number of questions (5-20)
+   - Select the document language for OCR (important for handwritten/scanned PDFs)
+4. Wait while the app processes your PDF and generates questions
+   - For scanned/handwritten PDFs, OCR processing may take 1-2 minutes per page
 5. Your exam is ready!
 
 ### Taking an Exam
@@ -146,6 +168,25 @@ The app uses intelligent pattern matching and NLP techniques to generate various
 - Creates contextual questions
 - Generates plausible distractors for multiple choice
 - Maintains question quality and relevance
+
+### Multi-Language OCR Support
+
+Works with documents in 12+ languages:
+
+- 🇬🇧 English
+- 🇩🇪 German (Deutsch)
+- 🇫🇷 French (Français)
+- 🇪🇸 Spanish (Español)
+- 🇮🇹 Italian (Italiano)
+- 🇵🇹 Portuguese (Português)
+- 🇳🇱 Dutch (Nederlands)
+- 🇵🇱 Polish (Polski)
+- 🇷🇺 Russian (Русский)
+- 🇨🇳 Chinese Simplified (简体中文)
+- 🇯🇵 Japanese (日本語)
+- 🇰🇷 Korean (한국어)
+
+Simply select your document's language before creating an exam for optimal OCR accuracy!
 
 ### Fuzzy Matching
 
