@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VersionBadge from '../components/VersionBadge';
-import { extractTextFromPDF } from '../utils/pdfProcessorImproved';
+import { extractTextFromPDF, generatePDFPreviews } from '../utils/pdfProcessorHybrid';
 import { generateQuestions } from '../utils/questionGenerator';
 import { saveExam } from '../utils/storage';
 import '../styles/CreateExam.css';
@@ -11,7 +11,7 @@ import '../styles/CreateExam.css';
 function CreateExam() {
     const navigate = useNavigate();
     const { t } = useLanguage();
-    const [step, setStep] = useState(1); // 1: upload, 2: configure, 3: processing, 4: success
+    const [step, setStep] = useState(1); // 1: upload, 2: configure, 2.5: manual text entry, 3: processing, 4: success
     const [file, setFile] = useState(null);
     const [examName, setExamName] = useState('');
     const [numQuestions, setNumQuestions] = useState(10);
@@ -20,6 +20,11 @@ function CreateExam() {
     const [error, setError] = useState('');
     const [progress, setProgress] = useState(0);
     const [processingMessage, setProcessingMessage] = useState('');
+
+    // New: For scanned PDFs with manual text entry
+    const [isScannedPDF, setIsScannedPDF] = useState(false);
+    const [pdfPreviews, setPdfPreviews] = useState([]);
+    const [manualText, setManualText] = useState('');
 
     // Supported languages for OCR
     const ocrLanguages = [
@@ -54,41 +59,78 @@ function CreateExam() {
         }
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (step === 1 && file) {
-            setStep(2);
+            setLoading(true);
+            setError('');
+            setProcessingMessage('Analysiere PDF...');
+
+            try {
+                // Try to extract text
+                const text = await extractTextFromPDF(file, (progressInfo) => {
+                    if (progressInfo.status === 'scanned-detected') {
+                        // PDF is scanned, needs manual entry
+                        setIsScannedPDF(true);
+                    } else if (progressInfo.status === 'extracting') {
+                        setProcessingMessage(`Extrahiere Text... ${progressInfo.percentage}%`);
+                    }
+                });
+
+                if (text && text.length > 100) {
+                    // Text extracted successfully
+                    setIsScannedPDF(false);
+                    setStep(2);
+                } else {
+                    // Scanned PDF - generate previews and show manual entry
+                    setProcessingMessage('Generiere Vorschau...');
+                    const previewData = await generatePDFPreviews(file, 3);
+                    setPdfPreviews(previewData.previews);
+                    setIsScannedPDF(true);
+                    setStep(2);
+                }
+            } catch (error) {
+                console.error('Error analyzing PDF:', error);
+                setError('Fehler beim Analysieren des PDFs');
+            } finally {
+                setLoading(false);
+                setProcessingMessage('');
+            }
         }
     };
 
     const handleCreateExam = async () => {
-        if (!file || !examName) return;
+        if (!examName) return;
 
         setLoading(true);
         setError('');
         setStep(3);
         setProgress(10);
-        setProcessingMessage(t('createExam.processing.analyzingPDF'));
+        setProcessingMessage('Erstelle Prüfung...');
 
         try {
-            // Use improved OCR processor
-            const text = await extractTextFromPDF(file, (progressInfo) => {
-                if (progressInfo.status === 'detected-scanned') {
-                    setProcessingMessage(t('createExam.processing.detectedScanned'));
-                    setProgress(20);
-                } else if (progressInfo.status === 'ocr') {
-                    setProcessingMessage(`${t('createExam.processing.readingPage')} ${progressInfo.page}/${progressInfo.totalPages} (OCR: ${progressInfo.ocrProgress}%)`);
-                    setProgress(20 + Math.round(progressInfo.percentage * 0.4));
-                } else if (progressInfo.status === 'extracting') {
-                    setProcessingMessage(`${t('createExam.processing.extractingText')} ${progressInfo.page}/${progressInfo.totalPages}`);
-                    setProgress(20 + Math.round(progressInfo.percentage * 0.4));
-                } else if (progressInfo.status === 'processing') {
-                    setProcessingMessage(`${t('createExam.processing.processingPage')} ${progressInfo.page}/${progressInfo.totalPages}`);
-                    setProgress(20 + Math.round(progressInfo.percentage * 0.4));
-                }
-            }, ocrLanguage);
+            let text = '';
 
-            if (!text || text.length < 100) {
-                throw new Error(t('createExam.errors.extractionFailed'));
+            if (isScannedPDF) {
+                // Use manually entered text
+                if (!manualText || manualText.length < 100) {
+                    throw new Error('Bitte gib mindestens 100 Zeichen Text ein');
+                }
+                text = manualText;
+                setProgress(60);
+            } else {
+                // Extract text from PDF
+                setProcessingMessage('Extrahiere Text...');
+                text = await extractTextFromPDF(file, (progressInfo) => {
+                    if (progressInfo.status === 'extracting') {
+                        setProcessingMessage(`Extrahiere Text... ${progressInfo.page}/${progressInfo.totalPages}`);
+                        setProgress(10 + Math.round(progressInfo.percentage * 0.5));
+                    }
+                });
+
+                if (!text || text.length < 100) {
+                    throw new Error('Nicht genug Text extrahiert');
+                }
+                setProgress(60);
             }
 
             // Generate questions
@@ -222,6 +264,77 @@ function CreateExam() {
                         <p className="page-subtitle">{t('createExam.configureSubtitle')}</p>
 
                         <div className="config-form">
+                            {/* Show manual text entry for scanned PDFs */}
+                            {isScannedPDF && (
+                                <div className="manual-entry-section">
+                                    <div className="info-banner warning">
+                                        <svg className="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <div>
+                                            <strong>📝 Gescannte PDF erkannt!</strong>
+                                            <p>Deine PDF enthält Handschrift oder Bilder. Bitte gib den Text manuell ein oder kopiere ihn aus dem PDF.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* PDF Preview */}
+                                    {pdfPreviews.length > 0 && (
+                                        <div className="pdf-preview-section">
+                                            <h3 style={{ marginBottom: '15px' }}>📄 PDF Vorschau:</h3>
+                                            <div className="pdf-previews">
+                                                {pdfPreviews.map((preview) => (
+                                                    <div key={preview.pageNum} className="pdf-preview-item">
+                                                        <img
+                                                            src={preview.dataUrl}
+                                                            alt={`Seite ${preview.pageNum}`}
+                                                            style={{
+                                                                maxWidth: '100%',
+                                                                border: '2px solid rgba(255,255,255,0.1)',
+                                                                borderRadius: '8px',
+                                                                marginBottom: '8px'
+                                                            }}
+                                                        />
+                                                        <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>
+                                                            Seite {preview.pageNum}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Manual Text Input */}
+                                    <div className="form-group">
+                                        <label htmlFor="manual-text">
+                                            📝 Text eingeben (mindestens 100 Zeichen)
+                                        </label>
+                                        <textarea
+                                            id="manual-text"
+                                            value={manualText}
+                                            onChange={(e) => setManualText(e.target.value)}
+                                            placeholder="Gib hier den Text aus deinem PDF ein oder kopiere ihn..."
+                                            className="form-textarea"
+                                            rows="12"
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                fontSize: '1rem',
+                                                borderRadius: '8px',
+                                                border: '2px solid rgba(255,255,255,0.1)',
+                                                background: 'rgba(255,255,255,0.05)',
+                                                color: 'white',
+                                                resize: 'vertical',
+                                                minHeight: '300px'
+                                            }}
+                                        />
+                                        <p className="form-hint">
+                                            {manualText.length} Zeichen
+                                            {manualText.length < 100 && ` (noch ${100 - manualText.length} benötigt)`}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="form-group">
                                 <label htmlFor="exam-name">{t('createExam.form.examName')}</label>
                                 <input
